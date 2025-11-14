@@ -1,0 +1,79 @@
+PySpark at Scale: How to Tune for Performance and Cost 🚀
+
+PySpark is powerful — but at scale, even small inefficiencies can snowball into massive delays and costs.
+
+Here are 8 optimization techniques I rely on to keep pipelines fast, reliable, and cost-efficient 👇
+
+---
+
+✅ 1. Avoid .collect() on Large Datasets  
+Why: Pulls all data to the driver, risking out-of-memory errors.  
+Use Instead: .show(), .limit(), or .take()  
+`python
+df.limit(10).show()
+`
+---
+
+✅ 2. Use broadcast() for Small Lookup Tables  
+Why: Prevents expensive shuffles during joins.  
+Use: Broadcast small dimension tables.  
+`python
+df.join(broadcast(dim_table), "id")
+`
+---
+
+✅ 3. Replace UDFs with Built-in Functions  
+Why: UDFs are slow and break query planning.  
+Use: Native PySpark functions like when(), col(), regexp_replace()  
+`python
+df.withColumn("flag", when(col("status") == "active", 1).otherwise(0))
+`
+---
+
+✅ 4. Repartition Before Writing  
+Why: Avoids small file explosion and improves downstream performance.  
+Use: .coalesce() or .repartition()  
+`python
+df.repartition(10).write.parquet("s3://bucket/output/")
+`
+---
+
+✅ 5. Cache Only When Reused  
+Why: Unused caching wastes memory and slows jobs.  
+Use: .persist() only when reused multiple times.  
+`python
+df.persist()
+`
+---
+
+✅ 6. Tune spark.sql.shuffle.partitions  
+Why: Default (200) may be inefficient for your workload.  
+Use: Adjust based on data size and cluster capacity.  
+`python
+spark.conf.set("spark.sql.shuffle.partitions", 100)
+`
+---
+
+✅ 7. Filter Early, Select Only Needed Columns  
+Why: Reduces data movement and memory usage.  
+Use: Push filters and projections to the start.  
+`python
+df.select("id", "status").filter(col("status") == "active")
+`
+---
+
+✅ 8. Use Columnar Formats (Parquet/ORC)  
+Why: Enables predicate pushdown and faster I/O.  
+Use: Avoid CSV/JSON for large-scale processing.  
+`python
+df.write.parquet("s3://bucket/output/")
+`
+---
+
+💡 Final Thought  
+PySpark optimization isn’t about clever hacks — it’s about writing code that respects the engine, minimizes shuffles, and scales with data.
+
+✅ Faster jobs  
+✅ Lower costs  
+✅ Fewer surprises  
+✅ More reliable pipelines
